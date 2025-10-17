@@ -3,212 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3I/ATLAS Live Tracker</title>
+<title>3I/ATLAS Tracker</title>
 <style>
-  * {margin:0; padding:0; box-sizing:border-box;}
-  body {font-family: 'Segoe UI', sans-serif; background: #000010; color: #fff; overflow-x:hidden;}
-  #header {background: rgba(0,0,0,0.9); padding:20px; text-align:center; border-bottom: 2px solid #00d4ff;}
-  h1 {font-size:2em; background: linear-gradient(45deg,#00d4ff,#7b2cbf); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
-  .subtitle {color:#aaa;}
-  #controls {display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:10px; background: rgba(20,20,40,0.95);}
-  select, button {padding:10px 20px; border:none; border-radius:6px; cursor:pointer; background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; font-weight:600; transition:0.3s;}
-  select:hover, button:hover {transform:translateY(-2px);}
-  #container {display:flex; flex-direction:column-reverse; height: calc(100vh - 120px);}
-  #canvas-container {flex:1; position:relative;}
-  #info-panel {height:200px; overflow-y:auto; background: rgba(20,20,40,0.95); padding:15px;}
-  .info-item {margin:5px 0;}
-  .info-label {color:#888; display:inline-block; width:120px;}
-  .info-value {color:#fff; font-weight:600;}
-  #status, #date-display {position:absolute; top:10px; padding:8px 12px; border-radius:6px; background: rgba(0,0,0,0.7);}
-  #status {left:10px; border:1px solid #00d4ff;}
-  #date-display {right:10px; border:1px solid #7b2cbf;}
+  body {margin:0; overflow:hidden; font-family:sans-serif; background:#000010; color:#fff;}
+  #status {position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); padding:5px 10px; border-radius:5px;}
+  #controls {position:absolute; top:10px; right:10px; display:flex; gap:5px; flex-wrap:wrap;}
+  #controls button {padding:6px 10px; font-size:14px; border-radius:5px; border:none; background:#00d4ff; color:#000; cursor:pointer;}
 </style>
 </head>
 <body>
-
-<div id="header">
-  <h1>🌌 3I/ATLAS Live Tracker</h1>
-  <p class="subtitle">Real-time 3D interstellar visualization</p>
-</div>
-
+<div id="status">Initializing...</div>
 <div id="controls">
-  <select id="objectSelect">
-    <option value="atlas" selected>3I/ATLAS (C/2025 N1)</option>
-    <option value="oumuamua">1I/'Oumuamua (2017)</option>
-    <option value="borisov">2I/Borisov (2019)</option>
-  </select>
-  <button id="toggleOrbit">Toggle Orbit</button>
-  <button id="toggleEarthView">Earth Portal View</button>
-  <button id="toggleSpeed">Speed: 1x</button>
-  <button id="resetView">Reset View</button>
+  <button id="toggleView">Earth View: Off</button>
+  <button id="toggleOrbit">Orbit: On</button>
 </div>
-
-<div id="container">
-  <div id="canvas-container">
-    <div id="status">Initializing...</div>
-    <div id="date-display">Date: Oct 17, 2025</div>
-  </div>
-  <div id="info-panel">
-    <div class="info-item"><span class="info-label">Distance from Sun:</span> <span id="distSun" class="info-value">-</span></div>
-    <div class="info-item"><span class="info-label">Distance from Earth:</span> <span id="distEarth" class="info-value">-</span></div>
-    <div class="info-item"><span class="info-label">Velocity:</span> <span id="velocity" class="info-value">-</span></div>
-    <div class="info-item"><span class="info-label">Phase:</span> <span id="phase" class="info-value">-</span></div>
-  </div>
-</div>
-
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.0/examples/jsm/controls/OrbitControls.js';
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/controls/OrbitControls.js"></script>
+<script>
 let scene, camera, renderer, controls;
-let sun, earth, mars, jupiter, interstellarObj;
-let orbitLine, showOrbit = true, useEarthView = false;
-let timeSpeed = 1;
+let sun, earth, interstellarObj, orbitLine;
+let useEarthView = false;
+let showOrbit = true;
 let time = 0;
-let currentDate = new Date('2025-10-17');
+const AU = 150; // scale factor
 
-const AU = 150;
-
+// Simplified interstellar object data
 const objectData = {
-  atlas: {name:"3I/ATLAS", color:0x00d4ff, velocity:67.5, perihelionDist:1.4, semiMajorAxis:-0.5, eccentricity:6.2, inclination:45*Math.PI/180, argumentOfPerihelion:215*Math.PI/180, longitudeOfNode:310*Math.PI/180},
-  oumuamua: {name:"1I/'Oumuamua", color:0xff6b6b, velocity:26.33, perihelionDist:0.25, semiMajorAxis:-1.3, eccentricity:1.2, inclination:122.7*Math.PI/180, argumentOfPerihelion:241.8*Math.PI/180, longitudeOfNode:24.6*Math.PI/180},
-  borisov: {name:"2I/Borisov", color:0x4ecdc4, velocity:32.2, perihelionDist:2.01, semiMajorAxis:-0.85, eccentricity:3.36, inclination:44.05*Math.PI/180, argumentOfPerihelion:209.13*Math.PI/180, longitudeOfNode:308.15*Math.PI/180}
+  atlas: {color:0x00d4ff, semiMajorAxis:-0.5, eccentricity:6.2, inclination:45*Math.PI/180, argumentOfPerihelion:215*Math.PI/180, longitudeOfNode:310*Math.PI/180}
 };
 
-let currentObject = 'atlas';
+init();
+animate();
 
-function init(){
+function init() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
-  camera.position.set(0, 150, 400);
+
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000);
+  camera.position.set(0, 200, 500);
 
   renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setSize(window.innerWidth, window.innerHeight*0.7);
-  document.getElementById('canvas-container').appendChild(renderer.domElement);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-  // Starfield + constellations
-  const starGeo = new THREE.BufferGeometry();
-  const starVertices = [];
-  for(let i=0;i<2000;i++){
-    starVertices.push((Math.random()-0.5)*5000,(Math.random()-0.5)*5000,(Math.random()-0.5)*5000);
-  }
-  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVertices,3));
-  const stars = new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:1,opacity:0.7,transparent:true}));
-  scene.add(stars);
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
 
   // Sun
   sun = new THREE.Mesh(new THREE.SphereGeometry(25,32,32), new THREE.MeshBasicMaterial({color:0xffff00}));
   scene.add(sun);
 
-  // Earth & planets
-  earth = createPlanet(AU,0x2233ff);
-  mars = createPlanet(228,0xff6347);
-  jupiter = createPlanet(520,0xffa500);
+  // Earth
+  earth = new THREE.Mesh(new THREE.SphereGeometry(6,32,32), new THREE.MeshPhongMaterial({color:0x2233ff}));
+  earth.position.set(AU,0,0);
+  scene.add(earth);
 
-  createInterstellarObject();
-
-  // Light
-  scene.add(new THREE.AmbientLight(0x404040,1.5));
-  scene.add(new THREE.PointLight(0xffffff,2,2500));
-
-  // Controls
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-
-  window.addEventListener('resize',onWindowResize);
-
-  document.getElementById('objectSelect').addEventListener('change',(e)=>{currentObject=e.target.value; updateInterstellarObject();});
-  document.getElementById('toggleOrbit').addEventListener('click',()=>{showOrbit=!showOrbit; if(orbitLine) orbitLine.visible=showOrbit;});
-  document.getElementById('toggleEarthView').addEventListener('click',()=>{useEarthView=!useEarthView;});
-  document.getElementById('toggleSpeed').addEventListener('click',()=>{timeSpeed = timeSpeed===1?5:timeSpeed===5?10:timeSpeed===10?30:1; document.getElementById('toggleSpeed').textContent='Speed: '+timeSpeed+'x';});
-  document.getElementById('resetView').addEventListener('click',()=>{camera.position.set(0,150,400); camera.lookAt(0,0,0);});
-  
-  animate();
-}
-
-function createPlanet(distance,color){
-  const geo = new THREE.SphereGeometry(6,32,32);
-  const mat = new THREE.MeshPhongMaterial({color:color});
-  const planet = new THREE.Mesh(geo,mat);
-  planet.userData.distance = distance;
-  scene.add(planet);
-  return planet;
-}
-
-function createInterstellarObject(){
-  const data = objectData[currentObject];
-  const geo = new THREE.SphereGeometry(5,16,16);
-  interstellarObj = new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:data.color}));
+  // Interstellar Object
+  interstellarObj = new THREE.Mesh(new THREE.SphereGeometry(5,16,16), new THREE.MeshBasicMaterial({color:objectData.atlas.color}));
   scene.add(interstellarObj);
-  createOrbitPath();
+
+  // Orbit line
+  createOrbitLine();
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0x404040));
+  scene.add(new THREE.PointLight(0xffffff,2,2000));
+
+  // Starfield
+  const starsGeo = new THREE.BufferGeometry();
+  const starVertices = [];
+  for(let i=0;i<1500;i++){
+    starVertices.push((Math.random()-0.5)*5000,(Math.random()-0.5)*5000,(Math.random()-0.5)*5000);
+  }
+  starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVertices,3));
+  const stars = new THREE.Points(starsGeo,new THREE.PointsMaterial({color:0xffffff,size:1}));
+  scene.add(stars);
+
+  // Buttons
+  document.getElementById('toggleView').addEventListener('click',()=>{
+    useEarthView = !useEarthView;
+    document.getElementById('toggleView').textContent = 'Earth View: '+(useEarthView?'On':'Off');
+  });
+  document.getElementById('toggleOrbit').addEventListener('click',()=>{
+    showOrbit = !showOrbit;
+    orbitLine.visible = showOrbit;
+  });
+
+  window.addEventListener('resize', onWindowResize);
+  document.getElementById('status').textContent = 'Ready';
 }
 
-function createOrbitPath(){
-  if(orbitLine) scene.remove(orbitLine);
+function createOrbitLine(){
   const points = [];
-  const data = objectData[currentObject];
-  for(let i=0;i<=800;i++){
-    const t = (i/800)*Math.PI*5 - Math.PI*2.5;
-    const pos = calculateHyperbolicPosition(t,data);
-    points.push(new THREE.Vector3(pos.x,pos.y,pos.z));
+  for(let i=0;i<=360;i++){
+    const t = i * Math.PI/180;
+    const x = AU*2 * Math.cos(t);
+    const z = AU*2 * Math.sin(t);
+    points.push(new THREE.Vector3(x,0,z));
   }
-  const geo = new THREE.BufferGeometry().setFromPoints(points);
-  orbitLine = new THREE.Line(geo,new THREE.LineBasicMaterial({color:objectData[currentObject].color,transparent:true,opacity:0.7}));
-  orbitLine.visible = showOrbit;
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const material = new THREE.LineBasicMaterial({color:0x00d4ff});
+  orbitLine = new THREE.Line(geometry,material);
   scene.add(orbitLine);
 }
 
-function calculateHyperbolicPosition(t,data){
-  const a = data.semiMajorAxis*AU;
+function calculateHyperbolicPosition(t){
+  const data = objectData.atlas;
+  const a = data.semiMajorAxis * AU;
   const e = data.eccentricity;
-  const i = data.inclination;
-  const w = data.argumentOfPerihelion;
-  const o = data.longitudeOfNode;
-
   const F = t;
   const r = Math.abs(a)*(e*Math.cosh(F)-1);
-  const v = 2*Math.atan(Math.sqrt((e+1)/(e-1))*Math.tanh(F/2));
+  const v = 2 * Math.atan(Math.sqrt((e+1)/(e-1))*Math.tanh(F/2));
   const xOrb = r*Math.cos(v);
   const yOrb = r*Math.sin(v);
-
-  const x = (Math.cos(o)*Math.cos(w)-Math.sin(o)*Math.sin(w)*Math.cos(i))*xOrb +
-            (-Math.cos(o)*Math.sin(w)-Math.sin(o)*Math.cos(w)*Math.cos(i))*yOrb;
-  const y = (Math.sin(o)*Math.cos(w)+Math.cos(o)*Math.sin(w)*Math.cos(i))*xOrb +
-            (-Math.sin(o)*Math.sin(w)+Math.cos(o)*Math.cos(w)*Math.cos(i))*yOrb;
-  const z = Math.sin(w)*Math.sin(i)*xOrb + Math.cos(w)*Math.sin(i)*yOrb;
-  return {x,y,z};
-}
-
-function updateInterstellarObject(){
-  scene.remove(interstellarObj);
-  createInterstellarObject();
-}
-
-function updateInfo(){
-  const data = objectData[currentObject];
-  const pos = calculateHyperbolicPosition(time*0.005,data);
-  const distSun = Math.sqrt(pos.x**2 + pos.y**2 + pos.z**2)/AU;
-  const earthPos = {x:AU*Math.cos(time*0.01),y:0,z:AU*Math.sin(time*0.01)};
-  const distEarth = Math.sqrt((pos.x-earthPos.x)**2 + (pos.y-earthPos.y)**2 + (pos.z-earthPos.z)**2)/AU;
-  document.getElementById('distSun').textContent = distSun.toFixed(2)+' AU';
-  document.getElementById('distEarth').textContent = distEarth.toFixed(2)+' AU';
-  document.getElementById('velocity').textContent = data.velocity.toFixed(2)+' km/s';
-  document.getElementById('phase').textContent = (currentDate.getMonth()+1)+'/'+currentDate.getDate()+'/'+currentDate.getFullYear();
+  const i = data.inclination, w=data.argumentOfPerihelion, o=data.longitudeOfNode;
+  const x = (Math.cos(o)*Math.cos(w)-Math.sin(o)*Math.sin(w)*Math.cos(i))*xOrb + (-Math.cos(o)*Math.sin(w)-Math.sin(o)*Math.cos(w)*Math.cos(i))*yOrb;
+  const y = (Math.sin(w)*Math.sin(i))*xOrb + (Math.cos(w)*Math.sin(i))*yOrb;
+  const z = (Math.sin(o)*Math.cos(w)+Math.cos(o)*Math.sin(w)*Math.cos(i))*xOrb + (-Math.sin(o)*Math.sin(w)+Math.cos(o)*Math.cos(w)*Math.cos(i))*yOrb;
+  return new THREE.Vector3(x,y,z);
 }
 
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
-  
-  time += 0.01*timeSpeed;
-  currentDate.setSeconds(currentDate.getSeconds()+1*timeSpeed);
-  updateInfo();
+  time += 0.01;
 
-  const data = objectData[currentObject];
-  const pos = calculateHyperbolicPosition(time*0.005,data);
-  interstellarObj.position.set(pos.x,pos.y,pos.z);
+  interstellarObj.position.copy(calculateHyperbolicPosition(time*5));
 
-  // Earth portal camera view
+  // Earth portal view
   if(useEarthView){
     const offset = new THREE.Vector3(0,30,80);
     camera.position.copy(earth.position.clone().add(offset));
@@ -219,14 +140,10 @@ function animate(){
 }
 
 function onWindowResize(){
-  const container = document.getElementById('canvas-container');
-  camera.aspect = container.clientWidth/container.clientHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
-init();
 </script>
-
 </body>
 </html>
