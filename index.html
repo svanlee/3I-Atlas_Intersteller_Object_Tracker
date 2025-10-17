@@ -3,266 +3,230 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3I/ATLAS Real-Time Tracker</title>
+<title>3I/ATLAS Live Tracker</title>
 <style>
-* {margin:0; padding:0; box-sizing:border-box;}
-body {font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(to bottom,#000000,#0a0a2e); color:#fff; overflow-x:hidden;}
-#header {background: rgba(0,0,0,0.9); padding:20px; text-align:center; border-bottom:3px solid #00d4ff;}
-h1 {font-size:2em; background:linear-gradient(45deg,#00d4ff,#7b2cbf); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
-.subtitle {color:#aaa; font-size:1em;}
-.alert-banner {background:linear-gradient(90deg,#7b2cbf,#00d4ff); padding:10px; text-align:center; font-weight:bold; animation:pulse 2s infinite;}
-@keyframes pulse {0%,100%{opacity:1;}50%{opacity:0.7;}}
-#controls {background:rgba(20,20,40,0.95); padding:12px; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; border-bottom:1px solid #333;}
-select, button {padding:10px 16px; font-size:14px; border:none; border-radius:6px; cursor:pointer; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; transition:all 0.3s; font-weight:600;}
-select:hover, button:hover {transform:translateY(-2px); box-shadow:0 4px 15px rgba(102,126,234,0.4);}
-#container {display:flex; flex-direction:row; height:calc(100vh - 160px);}
-#canvas-container {flex:1; position:relative; min-height:400px;}
-#info-panel {width:300px; background:rgba(20,20,40,0.98); padding:20px; overflow-y:auto; border-left:2px solid #00d4ff;}
-.info-section {margin-bottom:20px; padding-bottom:10px; border-bottom:1px solid #333;}
-.info-section h3 {color:#00d4ff; margin-bottom:10px; font-size:1em; text-transform:uppercase;}
-.info-item {margin:8px 0; font-size:0.9em;}
-.info-label {color:#888; display:inline-block; width:120px; font-weight:500;}
-.info-value {color:#fff; font-weight:600;}
-.highlight {background:rgba(0,212,255,0.2); padding:12px; border-radius:6px; border-left:4px solid #00d4ff; margin:10px 0;}
-#status {position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.85); padding:8px 12px; border-radius:6px; font-size:0.85em; border:1px solid rgba(0,212,255,0.5);}
-#date-display {position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.85); padding:8px 12px; border-radius:6px; font-size:0.85em; border:1px solid rgba(123,44,191,0.5);}
-.fact-box {background:linear-gradient(135deg,rgba(123,44,191,0.2),rgba(0,212,255,0.2)); padding:8px; border-radius:6px; margin:6px 0; font-size:0.85em; border:1px solid rgba(123,44,191,0.3);}
-@media (max-width:800px){#container{flex-direction:column;}#info-panel{width:100%; height:250px; border-left:none; border-top:2px solid #00d4ff;}}
+  * {margin:0; padding:0; box-sizing:border-box;}
+  body {font-family: 'Segoe UI', sans-serif; background: #000010; color: #fff; overflow-x:hidden;}
+  #header {background: rgba(0,0,0,0.9); padding:20px; text-align:center; border-bottom: 2px solid #00d4ff;}
+  h1 {font-size:2em; background: linear-gradient(45deg,#00d4ff,#7b2cbf); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
+  .subtitle {color:#aaa;}
+  #controls {display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:10px; background: rgba(20,20,40,0.95);}
+  select, button {padding:10px 20px; border:none; border-radius:6px; cursor:pointer; background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; font-weight:600; transition:0.3s;}
+  select:hover, button:hover {transform:translateY(-2px);}
+  #container {display:flex; flex-direction:column-reverse; height: calc(100vh - 120px);}
+  #canvas-container {flex:1; position:relative;}
+  #info-panel {height:200px; overflow-y:auto; background: rgba(20,20,40,0.95); padding:15px;}
+  .info-item {margin:5px 0;}
+  .info-label {color:#888; display:inline-block; width:120px;}
+  .info-value {color:#fff; font-weight:600;}
+  #status, #date-display {position:absolute; top:10px; padding:8px 12px; border-radius:6px; background: rgba(0,0,0,0.7);}
+  #status {left:10px; border:1px solid #00d4ff;}
+  #date-display {right:10px; border:1px solid #7b2cbf;}
 </style>
 </head>
 <body>
-<div id="header">
-<h1>🌌 3I/ATLAS Live Tracker</h1>
-<p class="subtitle">Real-time 3D visualization of the third interstellar visitor</p>
-</div>
 
-<div class="alert-banner">
-⚡ ACTIVE TRACKING: Discovered July 1, 2025 • Perihelion Oct 30, 2025 • Currently Observable
+<div id="header">
+  <h1>🌌 3I/ATLAS Live Tracker</h1>
+  <p class="subtitle">Real-time 3D interstellar visualization</p>
 </div>
 
 <div id="controls">
-<select id="objectSelect">
-<option value="atlas" selected>3I/ATLAS (C/2025 N1)</option>
-<option value="oumuamua">1I/'Oumuamua (2017)</option>
-<option value="borisov">2I/Borisov (2019)</option>
-</select>
-<button id="toggleOrbit">Toggle Orbit Path</button>
-<button id="toggleLabels">Toggle Labels</button>
-<button id="toggleSpeed">Speed: Normal</button>
-<button id="toggleEarthView">Earth Portal View</button>
-<button id="resetView">Reset View</button>
+  <select id="objectSelect">
+    <option value="atlas" selected>3I/ATLAS (C/2025 N1)</option>
+    <option value="oumuamua">1I/'Oumuamua (2017)</option>
+    <option value="borisov">2I/Borisov (2019)</option>
+  </select>
+  <button id="toggleOrbit">Toggle Orbit</button>
+  <button id="toggleEarthView">Earth Portal View</button>
+  <button id="toggleSpeed">Speed: 1x</button>
+  <button id="resetView">Reset View</button>
 </div>
 
 <div id="container">
-<div id="canvas-container">
-<div id="status" class="loading">Initializing 3D visualization...</div>
-<div id="date-display">Date: Oct 17, 2025</div>
-</div>
-<div id="info-panel">
-<div class="info-section">
-<h3>📍 Current Position</h3>
-<div class="info-item"><span class="info-label">Distance from Sun:</span><span class="info-value" id="distSun">-</span></div>
-<div class="info-item"><span class="info-label">Distance from Earth:</span><span class="info-value" id="distEarth">-</span></div>
-<div class="info-item"><span class="info-label">Velocity:</span><span class="info-value" id="velocity">-</span></div>
-<div class="info-item"><span class="info-label">Phase:</span><span class="info-value" id="phase">Approaching</span></div>
-</div>
-<div class="info-section">
-<h3>🔬 Object Properties</h3>
-<div class="info-item"><span class="info-label">Discovery Date:</span><span class="info-value" id="discovery">-</span></div>
-<div class="info-item"><span class="info-label">Perihelion:</span><span class="info-value" id="perihelion">-</span></div>
-<div class="info-item"><span class="info-label">Eccentricity:</span><span class="info-value" id="eccentricity">-</span></div>
-<div class="info-item"><span class="info-label">Nucleus Size:</span><span class="info-value" id="size">-</span></div>
-</div>
-<div class="highlight">
-<strong>🌟 Latest Observations:</strong>
-<div class="fact-box" id="observations">Unusual nickel emissions detected with no iron vapor. Anti-tail phenomenon observed. Active coma with water vapor and cyanide detected.</div>
-</div>
-<div class="info-section">
-<h3>ℹ️ About 3I/ATLAS</h3>
-<p style="font-size:0.85em; line-height:1.5; color:#ccc;">3I/ATLAS is the third confirmed interstellar object to visit our solar system. Discovered by the ATLAS observatory in Chile, it exhibits unprecedented hyperbolic eccentricity (6.2) and unusual chemical composition including nickel without iron.</p>
-<div class="fact-box"><strong>Did you know?</strong> 3I/ATLAS may be up to 10 billion years old, making it a time capsule from an earlier age of the universe.</div>
-</div>
-</div>
+  <div id="canvas-container">
+    <div id="status">Initializing...</div>
+    <div id="date-display">Date: Oct 17, 2025</div>
+  </div>
+  <div id="info-panel">
+    <div class="info-item"><span class="info-label">Distance from Sun:</span> <span id="distSun" class="info-value">-</span></div>
+    <div class="info-item"><span class="info-label">Distance from Earth:</span> <span id="distEarth" class="info-value">-</span></div>
+    <div class="info-item"><span class="info-label">Velocity:</span> <span id="velocity" class="info-value">-</span></div>
+    <div class="info-item"><span class="info-label">Phase:</span> <span id="phase" class="info-value">-</span></div>
+  </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// --- Initialization ---
-let scene,camera,renderer,sun,earth,venus,mercury,mars,jupiter,interstellarObj,orbitLine;
-let showOrbit=true,showLabels=true,timeSpeed=1,time=0;
-let currentObject='atlas';
-let currentDate=new Date('2025-10-17');
-const AU=150;
-let useEarthView=false;
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.0/examples/jsm/controls/OrbitControls.js';
 
-// Object Data
-const objectData={atlas:{name:"3I/ATLAS",fullName:"3I/ATLAS (C/2025 N1)",discovery:"July 1, 2025",perihelion:"1.4 AU (Oct 30, 2025)",perihelionDate:new Date('2025-10-30'),perihelionDist:1.4,color:0x00d4ff,eccentricity:6.2,semiMajorAxis:-0.5,inclination:45*Math.PI/180,argumentOfPerihelion:215*Math.PI/180,longitudeOfNode:310*Math.PI/180,velocity:67.5,size:"0.44-5.6 km",observations:"Unusual nickel emissions detected with no iron vapor. Anti-tail phenomenon observed. Active coma with water vapor and cyanide detected."},oumuamua:{name:"1I/'Oumuamua",fullName:"1I/'Oumuamua",discovery:"Oct 19, 2017",perihelion:"0.25 AU (Sep 9, 2017)",perihelionDate:new Date('2017-09-09'),perihelionDist:0.25,color:0xff6b6b,eccentricity:1.2,semiMajorAxis:-1.3,inclination:122.7*Math.PI/180,argumentOfPerihelion:241.8*Math.PI/180,longitudeOfNode:24.6*Math.PI/180,velocity:26.33,size:"~100-1000 m",observations:"Cigar or pancake-shaped object with unusual acceleration. First confirmed interstellar visitor."},borisov:{name:"2I/Borisov",fullName:"2I/Borisov (C/2019 Q4)",discovery:"Aug 30, 2019",perihelion:"2.01 AU (Dec 8, 2019)",perihelionDate:new Date('2019-12-08'),perihelionDist:2.01,color:0x4ecdc4,eccentricity:3.36,semiMajorAxis:-0.85,inclination:44.05*Math.PI/180,argumentOfPerihelion:209.13*Math.PI/180,longitudeOfNode:308.15*Math.PI/180,velocity:32.2,size:"~1 km",observations:"Most 'normal' interstellar object, resembling solar system comets. Active coma observed."}};
+let scene, camera, renderer, controls;
+let sun, earth, mars, jupiter, interstellarObj;
+let orbitLine, showOrbit = true, useEarthView = false;
+let timeSpeed = 1;
+let time = 0;
+let currentDate = new Date('2025-10-17');
 
-// --- Init Scene ---
+const AU = 150;
+
+const objectData = {
+  atlas: {name:"3I/ATLAS", color:0x00d4ff, velocity:67.5, perihelionDist:1.4, semiMajorAxis:-0.5, eccentricity:6.2, inclination:45*Math.PI/180, argumentOfPerihelion:215*Math.PI/180, longitudeOfNode:310*Math.PI/180},
+  oumuamua: {name:"1I/'Oumuamua", color:0xff6b6b, velocity:26.33, perihelionDist:0.25, semiMajorAxis:-1.3, eccentricity:1.2, inclination:122.7*Math.PI/180, argumentOfPerihelion:241.8*Math.PI/180, longitudeOfNode:24.6*Math.PI/180},
+  borisov: {name:"2I/Borisov", color:0x4ecdc4, velocity:32.2, perihelionDist:2.01, semiMajorAxis:-0.85, eccentricity:3.36, inclination:44.05*Math.PI/180, argumentOfPerihelion:209.13*Math.PI/180, longitudeOfNode:308.15*Math.PI/180}
+};
+
+let currentObject = 'atlas';
+
 function init(){
-scene=new THREE.Scene();
-camera=new THREE.PerspectiveCamera(75,document.getElementById('canvas-container').clientWidth/document.getElementById('canvas-container').clientHeight,0.1,10000);
-camera.position.set(0,300,500); camera.lookAt(0,0,0);
-renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(document.getElementById('canvas-container').clientWidth,document.getElementById('canvas-container').clientHeight);
-document.getElementById('canvas-container').appendChild(renderer.domElement);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
+  camera.position.set(0, 150, 400);
 
-// Stars
-const starsGeometry=new THREE.BufferGeometry();
-const starsMaterial=new THREE.PointsMaterial({color:0xffffff,size:2,transparent:true,opacity:0.8});
-const starsVertices=[];
-for(let i=0;i<2000;i++){starsVertices.push((Math.random()-0.5)*5000,(Math.random()-0.5)*5000,(Math.random()-0.5)*5000);}
-starsGeometry.setAttribute('position',new THREE.Float32BufferAttribute(starsVertices,3));
-scene.add(new THREE.Points(starsGeometry,starsMaterial));
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight*0.7);
+  document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-// Sun
-sun=new THREE.Mesh(new THREE.SphereGeometry(25,32,32),new THREE.MeshBasicMaterial({color:0xffff00}));
-const glow=new THREE.Mesh(new THREE.SphereGeometry(35,32,32),new THREE.MeshBasicMaterial({color:0xffaa00,transparent:true,opacity:0.3}));
-sun.add(glow); scene.add(sun);
+  // Starfield + constellations
+  const starGeo = new THREE.BufferGeometry();
+  const starVertices = [];
+  for(let i=0;i<2000;i++){
+    starVertices.push((Math.random()-0.5)*5000,(Math.random()-0.5)*5000,(Math.random()-0.5)*5000);
+  }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVertices,3));
+  const stars = new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:1,opacity:0.7,transparent:true}));
+  scene.add(stars);
 
-// Planets
-mercury=createPlanet(58,0x8c7853,3,'Mercury');
-venus=createPlanet(108,0xffc649,6,'Venus');
-earth=createPlanet(AU,0x2233ff,6,'Earth');
-mars=createPlanet(228,0xff6347,4.5,'Mars');
-jupiter=createPlanet(520,0xffa500,18,'Jupiter');
+  // Sun
+  sun = new THREE.Mesh(new THREE.SphereGeometry(25,32,32), new THREE.MeshBasicMaterial({color:0xffff00}));
+  scene.add(sun);
 
-// Interstellar Object
-createInterstellarObject();
+  // Earth & planets
+  earth = createPlanet(AU,0x2233ff);
+  mars = createPlanet(228,0xff6347);
+  jupiter = createPlanet(520,0xffa500);
 
-// Lighting
-scene.add(new THREE.AmbientLight(0x404040,1.5));
-scene.add(new THREE.PointLight(0xffffff,2.5,2500));
+  createInterstellarObject();
 
-// Controls
-setupMouseControls();
+  // Light
+  scene.add(new THREE.AmbientLight(0x404040,1.5));
+  scene.add(new THREE.PointLight(0xffffff,2,2500));
 
-// Event listeners
-document.getElementById('objectSelect').addEventListener('change',e=>{currentObject=e.target.value; updateInterstellarObject();});
-document.getElementById('toggleOrbit').addEventListener('click',()=>{showOrbit=!showOrbit;if(orbitLine) orbitLine.visible=showOrbit;});
-document.getElementById('toggleLabels').addEventListener('click',()=>{showLabels=!showLabels;});
-document.getElementById('toggleSpeed').addEventListener('click',()=>{const speeds=[1,5,10,30];const idx=speeds.indexOf(timeSpeed);timeSpeed=speeds[(idx+1)%speeds.length];document.getElementById('toggleSpeed').textContent=`Speed: ${timeSpeed}x`;});
-document.getElementById('toggleEarthView').addEventListener('click',()=>{useEarthView=!useEarthView;});
-document.getElementById('resetView').addEventListener('click',()=>{camera.position.set(0,300,500);camera.lookAt(0,0,0);});
+  // Controls
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
 
-window.addEventListener('resize',onWindowResize);
+  window.addEventListener('resize',onWindowResize);
 
-updateStatus('Tracking '+objectData[currentObject].fullName,'success');
-updateInfo();
+  document.getElementById('objectSelect').addEventListener('change',(e)=>{currentObject=e.target.value; updateInterstellarObject();});
+  document.getElementById('toggleOrbit').addEventListener('click',()=>{showOrbit=!showOrbit; if(orbitLine) orbitLine.visible=showOrbit;});
+  document.getElementById('toggleEarthView').addEventListener('click',()=>{useEarthView=!useEarthView;});
+  document.getElementById('toggleSpeed').addEventListener('click',()=>{timeSpeed = timeSpeed===1?5:timeSpeed===5?10:timeSpeed===10?30:1; document.getElementById('toggleSpeed').textContent='Speed: '+timeSpeed+'x';});
+  document.getElementById('resetView').addEventListener('click',()=>{camera.position.set(0,150,400); camera.lookAt(0,0,0);});
+  
+  animate();
 }
 
-// --- Create Planet ---
-function createPlanet(distance,color,size,name){
-const geometry=new THREE.SphereGeometry(size,32,32);
-const material=new THREE.MeshPhongMaterial({color:color});
-const planet=new THREE.Mesh(geometry,material);
-const orbitGeometry=new THREE.RingGeometry(distance-0.5,distance+0.5,128);
-const orbitMaterial=new THREE.MeshBasicMaterial({color:0x444444,side:THREE.DoubleSide,transparent:true,opacity:0.2});
-const orbit=new THREE.Mesh(orbitGeometry,orbitMaterial); orbit.rotation.x=Math.PI/2; scene.add(orbit);
-scene.add(planet);
-planet.userData.distance=distance; planet.userData.name=name;
-return planet;
+function createPlanet(distance,color){
+  const geo = new THREE.SphereGeometry(6,32,32);
+  const mat = new THREE.MeshPhongMaterial({color:color});
+  const planet = new THREE.Mesh(geo,mat);
+  planet.userData.distance = distance;
+  scene.add(planet);
+  return planet;
 }
 
-// --- Create Interstellar Object ---
 function createInterstellarObject(){
-const data=objectData[currentObject];
-interstellarObj=new THREE.Mesh(new THREE.SphereGeometry(5,16,16),new THREE.MeshBasicMaterial({color:data.color}));
-scene.add(interstellarObj);
-
-// Orbit line
-const points=[]; for(let t=-50;t<50;t+=0.5){const p=calculateHyperbolicPosition(t*0.1,data);points.push(new THREE.Vector3(p.x,p.y,p.z));}
-const orbitGeo=new THREE.BufferGeometry().setFromPoints(points);
-orbitLine=new THREE.Line(orbitGeo,new THREE.LineBasicMaterial({color:data.color,transparent:true,opacity:0.6}));
-scene.add(orbitLine);
+  const data = objectData[currentObject];
+  const geo = new THREE.SphereGeometry(5,16,16);
+  interstellarObj = new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:data.color}));
+  scene.add(interstellarObj);
+  createOrbitPath();
 }
 
-// --- Update Interstellar Object ---
-function updateInterstellarObject(){
-scene.remove(interstellarObj); scene.remove(orbitLine); createInterstellarObject(); updateInfo();
+function createOrbitPath(){
+  if(orbitLine) scene.remove(orbitLine);
+  const points = [];
+  const data = objectData[currentObject];
+  for(let i=0;i<=800;i++){
+    const t = (i/800)*Math.PI*5 - Math.PI*2.5;
+    const pos = calculateHyperbolicPosition(t,data);
+    points.push(new THREE.Vector3(pos.x,pos.y,pos.z));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  orbitLine = new THREE.Line(geo,new THREE.LineBasicMaterial({color:objectData[currentObject].color,transparent:true,opacity:0.7}));
+  orbitLine.visible = showOrbit;
+  scene.add(orbitLine);
 }
 
-// --- Hyperbolic Position ---
 function calculateHyperbolicPosition(t,data){
-const a=data.semiMajorAxis; const e=data.eccentricity; const i=data.inclination; const w=data.argumentOfPerihelion; const Omega=data.longitudeOfNode;
-const x=a*(e-Math.cosh(t)); const z=a*Math.sqrt(e*e-1)*Math.sinh(t); const y=0;
-const rotX=new THREE.Matrix4().makeRotationX(i);
-const rotZ=new THREE.Matrix4().makeRotationZ(w); const rotOmega=new THREE.Matrix4().makeRotationZ(Omega);
-const pos=new THREE.Vector3(x,y,z); pos.applyMatrix4(rotZ).applyMatrix4(rotX).applyMatrix4(rotOmega);
-return pos;
+  const a = data.semiMajorAxis*AU;
+  const e = data.eccentricity;
+  const i = data.inclination;
+  const w = data.argumentOfPerihelion;
+  const o = data.longitudeOfNode;
+
+  const F = t;
+  const r = Math.abs(a)*(e*Math.cosh(F)-1);
+  const v = 2*Math.atan(Math.sqrt((e+1)/(e-1))*Math.tanh(F/2));
+  const xOrb = r*Math.cos(v);
+  const yOrb = r*Math.sin(v);
+
+  const x = (Math.cos(o)*Math.cos(w)-Math.sin(o)*Math.sin(w)*Math.cos(i))*xOrb +
+            (-Math.cos(o)*Math.sin(w)-Math.sin(o)*Math.cos(w)*Math.cos(i))*yOrb;
+  const y = (Math.sin(o)*Math.cos(w)+Math.cos(o)*Math.sin(w)*Math.cos(i))*xOrb +
+            (-Math.sin(o)*Math.sin(w)+Math.cos(o)*Math.cos(w)*Math.cos(i))*yOrb;
+  const z = Math.sin(w)*Math.sin(i)*xOrb + Math.cos(w)*Math.sin(i)*yOrb;
+  return {x,y,z};
 }
 
-// --- Info Update ---
+function updateInterstellarObject(){
+  scene.remove(interstellarObj);
+  createInterstellarObject();
+}
+
 function updateInfo(){
-const data=objectData[currentObject];
-document.getElementById('distSun').textContent=(interstellarObj.position.length()/AU).toFixed(2)+' AU';
-document.getElementById('distEarth').textContent=(interstellarObj.position.clone().sub(earth.position).length()/AU).toFixed(2)+' AU';
-document.getElementById('velocity').textContent=data.velocity+' km/s';
-document.getElementById('phase').textContent=(interstellarObj.position.length()/AU<data.perihelionDist)?'Approaching':'Receding';
-document.getElementById('discovery').textContent=data.discovery;
-document.getElementById('perihelion').textContent=data.perihelion;
-document.getElementById('eccentricity').textContent=data.eccentricity;
-document.getElementById('size').textContent=data.size;
-document.getElementById('observations').textContent=data.observations;
+  const data = objectData[currentObject];
+  const pos = calculateHyperbolicPosition(time*0.005,data);
+  const distSun = Math.sqrt(pos.x**2 + pos.y**2 + pos.z**2)/AU;
+  const earthPos = {x:AU*Math.cos(time*0.01),y:0,z:AU*Math.sin(time*0.01)};
+  const distEarth = Math.sqrt((pos.x-earthPos.x)**2 + (pos.y-earthPos.y)**2 + (pos.z-earthPos.z)**2)/AU;
+  document.getElementById('distSun').textContent = distSun.toFixed(2)+' AU';
+  document.getElementById('distEarth').textContent = distEarth.toFixed(2)+' AU';
+  document.getElementById('velocity').textContent = data.velocity.toFixed(2)+' km/s';
+  document.getElementById('phase').textContent = (currentDate.getMonth()+1)+'/'+currentDate.getDate()+'/'+currentDate.getFullYear();
 }
 
-// --- Status ---
-function updateStatus(msg,type){
-const status=document.getElementById('status'); status.textContent=msg;
-status.style.backgroundColor=(type==='error')?'#aa0000':'rgba(0,0,0,0.85)';
-}
-
-// --- Animate ---
 function animate(){
-requestAnimationFrame(animate);
-time+=0.3*timeSpeed;
+  requestAnimationFrame(animate);
+  controls.update();
+  
+  time += 0.01*timeSpeed;
+  currentDate.setSeconds(currentDate.getSeconds()+1*timeSpeed);
+  updateInfo();
 
-// Move planets
-[mercury,venus,earth,mars,jupiter].forEach((planet,i)=>{
-if(!planet) return;
-const speed=0.008/(i+0.5);
-const angle=time*speed;
-planet.position.x=planet.userData.distance*Math.cos(angle);
-planet.position.z=planet.userData.distance*Math.sin(angle);
-});
+  const data = objectData[currentObject];
+  const pos = calculateHyperbolicPosition(time*0.005,data);
+  interstellarObj.position.set(pos.x,pos.y,pos.z);
 
-// Interstellar object
-const data=objectData[currentObject];
-if(interstellarObj) interstellarObj.position.copy(calculateHyperbolicPosition(time*0.05,data));
+  // Earth portal camera view
+  if(useEarthView){
+    const offset = new THREE.Vector3(0,30,80);
+    camera.position.copy(earth.position.clone().add(offset));
+    camera.lookAt(interstellarObj.position);
+  }
 
-// Camera Earth view
-if(useEarthView && earth && interstellarObj){
-const offset=new THREE.Vector3(0,AU*0.5,AU*1);
-camera.position.copy(earth.position.clone().add(offset));
-camera.lookAt(interstellarObj.position);
+  renderer.render(scene,camera);
 }
 
-renderer.render(scene,camera);
-}
-
-// --- Resize ---
 function onWindowResize(){
-const container=document.getElementById('canvas-container');
-camera.aspect=container.clientWidth/container.clientHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(container.clientWidth,container.clientHeight);
+  const container = document.getElementById('canvas-container');
+  camera.aspect = container.clientWidth/container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
 }
 
-// --- Mouse / Orbit Controls ---
-function setupMouseControls(){
-const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true;
-controls.dampingFactor=0.05;
-controls.enablePan=true;
-controls.minDistance=50;
-controls.maxDistance=3000;
-}
-
-// --- Init ---
 init();
-animate();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
 </body>
 </html>
- 
